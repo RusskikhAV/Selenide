@@ -11,13 +11,13 @@ public class GoogleMainPageSteps {
         googleMainPage = new GoogleMainPage();
     }
 
-    @Step("Ввести запрос в input поле")
+    @Step("Вводим запрос в поле")
     public GoogleMainPageSteps inputText(String query) {
         googleMainPage.enterQueryParam(query);
         return this;
     }
 
-    @Step("Нажать на кнопку поиска")
+    @Step("Нажимаем на кнопку поиска")
     public GoogleMainPageSteps clickSearchButton() {
         googleMainPage.clickSearchButton();
         return this;
