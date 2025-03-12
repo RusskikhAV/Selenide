@@ -2,52 +2,92 @@ package com.google;
 
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
-import com.codeborne.selenide.logevents.SelenideLogger;
-import com.google.steps.GoogleAfterSearchPageSteps;
 import com.google.steps.GoogleMainPageSteps;
+import com.google.steps.GoogleResultImagePageSteps;
+import com.google.steps.GoogleResultSearchPageSteps;
 import io.github.bonigarcia.wdm.WebDriverManager;
-import io.qameta.allure.selenide.AllureSelenide;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.openqa.selenium.chrome.ChromeOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import static com.codeborne.selenide.Condition.visible;
+import static com.codeborne.selenide.Selenide.$;
+
+/**
+ * Базовый класс для UI-тестов, предоставляющий общие настройки и методы для работы с браузером.
+ * Этот класс инициализирует WebDriver, настраивает браузер и предоставляет методы для открытия страниц и управления тестами.
+ */
 public class BaseUiTest {
-    protected GoogleMainPageSteps googleMainPageSteps;
-    protected GoogleAfterSearchPageSteps googleAfterSearchPageSteps;
+    private static final Logger logger = LoggerFactory.getLogger(BaseUiTest.class);
 
-    private void refreshPages() {
-        googleMainPageSteps = new GoogleMainPageSteps();
-        googleAfterSearchPageSteps = new GoogleAfterSearchPageSteps();
+    /**
+     * Шаги для работы с главной страницей Google.
+     */
+    protected final GoogleMainPageSteps googleMainPageSteps;
+
+    /**
+     * Шаги для работы со страницей результатов поиска Google.
+     */
+    protected final GoogleResultSearchPageSteps googleResultSearchPageSteps;
+
+    /**
+     * Шаги для работы со страницей результатов поиска изображений Google.
+     */
+    protected final GoogleResultImagePageSteps googleResultImagePageSteps;
+
+    /**
+     * Конструктор базового класса. Инициализирует шаги для работы с главной страницей, страницей результатов поиска
+     * и страницей выдачи изображений.
+     */
+    public BaseUiTest() {
+        this.googleMainPageSteps = new GoogleMainPageSteps();
+        this.googleResultSearchPageSteps = new GoogleResultSearchPageSteps();
+        this.googleResultImagePageSteps = new GoogleResultImagePageSteps();
     }
 
-    protected void open(String pageUrl) {
+    /**
+     * Открывает указанный URL в браузере и ожидает загрузки страницы.
+     *
+     * @param pageUrl URL страницы, которую нужно открыть.
+     */
+    protected void openPage(String pageUrl) {
+        logger.info("Открываем страницу: {}", pageUrl);
         Selenide.open(pageUrl);
-        Selenide.sleep(1000);
+        $("body").shouldBe(visible); // Ожидаем загрузки страницы
     }
 
+    /**
+     * Настройка браузера перед всеми тестами.
+     * Инициализирует WebDriver и настраивает параметры браузера.
+     */
     @BeforeAll
-    public static void setUpAll() {
-        //WebDriverManager.chromedriver().setup();
+    public static void globalSetup() {
+        logger.info("Настройка браузера перед всеми тестами");
+        WebDriverManager.edgedriver().setup(); // Устанавливаем EdgeDriver
+        Configuration.browser = "edge"; // Используем браузер Edge
+        Configuration.headless = false; // Отключаем headless-режим
+        Configuration.timeout = 60000; // Устанавливаем таймаут ожидания элементов
+        Configuration.holdBrowserOpen = false; // Закрывать браузер после тестов
     }
 
+    /**
+     * Настройка перед каждым тестом.
+     * Инициализирует шаги для работы с главной страницей и страницей результатов поиска.
+     */
     @BeforeEach
-    public void setUp() {
-        System.out.println(Configuration.headless);
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless", "--disable-gpu", "--window-size=1920,1080");
-        Configuration.browserCapabilities = options;
-        SelenideLogger.addListener("AllureSelenide", new AllureSelenide());
-        Configuration.browser = "chrome";
-        Configuration.headless = false;
-        Configuration.timeout = 100000;
-        System.out.println(Configuration.headless);
-        refreshPages();
+    public void setup() {
+        logger.info("Настройка перед каждым тестом");
     }
 
+    /**
+     * Завершение работы после каждого теста.
+     * Закрывает браузер и завершает сессию WebDriver.
+     */
     @AfterEach
     public void tearDown() {
-        Selenide.closeWebDriver();
+        logger.info("Завершение работы после теста");
+        Selenide.closeWebDriver(); // Закрываем браузер
     }
-
 }
